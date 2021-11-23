@@ -1,1 +1,11 @@
-# C++ Based HTTP-Server
+# HTTP-Server   
+c++ Based HTTP-Server
+
+## Environment
+ - OS
+    * Ubuntu20.04 (WSL)
+    * Raspbian (RPI4)
+
+## Dependencies
+ - C++17
+ - [SXC-Socket](https://github.com/errorcode4319/SXC-Socket)
