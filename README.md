@@ -2,9 +2,8 @@
 c++ Based HTTP-Server
 
 ## Environment
- - OS
-    * Ubuntu20.04 (WSL)
-    * Raspbian (RPI4)
+ - Ubuntu20.04 (WSL)
+ - Raspbian (RPI4)
 
 ## Dependencies
  - C++17
