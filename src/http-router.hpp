@@ -8,6 +8,8 @@
 
 #include <iostream>
 #include <unordered_map>
+#include <functional>
+#include <thread>
 #include <mutex>
 #include <future>
 #include <queue>
@@ -15,7 +17,14 @@
 namespace http {
 
     class HttpRouter {
-        
+    public:
+        HttpRouter() = default;
+        ~HttpRouter() = default;
+
+    private:
+        std::thread             mListenerThread;
+        std::condition_variable mWorkerCondvar;
+        std::unordered_map<std::string, std::function<int(std::string, int)>> mRouteMap; 
     };
 
 } 
