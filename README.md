@@ -7,4 +7,3 @@ c++ Based HTTP-Server
 
 ## Dependencies
  - C++17
- - [SXC-Socket](https://github.com/errorcode4319/SXC-Socket)
