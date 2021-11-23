@@ -1,2 +1,2 @@
-# SXC-HTTP-Server
-Simple Cross Compile HTTP Server
+#HTTP-Server
+C++ HTTP Server
