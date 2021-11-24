@@ -11,6 +11,17 @@ namespace http {
 
     };
 
+    class HttpRequest : public HttpMessage {
+
+    }
+
+    class HttpResponse : public HttpMessage {
+
+    }
+
+    using REQ = HttpRequest;
+    using RES = HttpResponse;
+
 }
 
 #endif 
