@@ -24,7 +24,6 @@ namespace http {
     private:
         std::thread             mListenerThread;
         std::condition_variable mWorkerCondvar;
-        std::unordered_map<std::string, std::function<int(std::string, int)>> mRouteMap; 
     };
 
 } 
