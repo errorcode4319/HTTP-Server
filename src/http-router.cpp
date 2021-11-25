@@ -27,11 +27,15 @@ namespace http {
     void HttpRouter::stop() {
         if(isRunning()) {
             mIsRunning = false;
-            if(mListenerThread.joinable()) mListenerThread.join();
-            for(auto& t: mWorkerThread) {
-                if(t.joinable()) t.join();
-            }
+            std::unique_lock lock(mReqMutex);
+            mWorkerCondvar.notify_all();
         }
+        if(mListenerThread.joinable())
+            mListenerThread.join();
+        for(auto& t: mWorkerThread) {
+            if(t.joinable()) t.join();
+        }
+    
     }
 
     void HttpRouter::addRoute(std::string_view uri, std::function<RES(const REQ&)> func, std::vector<std::string> methods) {
@@ -54,6 +58,22 @@ namespace http {
             throw std::runtime_error("Not Allowed Method");
         }
         throw std::runtime_error("404 Not Found");
+    }
+
+    void HttpRouter::pushReq(const ReqPkg& reqPkg) {
+        {
+            std::scoped_lock lock(mReqQMutex);
+            mReqQ.emplace(reqPkg);
+        }
+        std::unique_lock lock(mReqMutex);
+        mWorkerCondvar.notify_one();
+    }
+    std::optional<ReqPkg> HttpRouter::pullReq() {
+        std::scoped_lock lock(mReqQMutex);
+        if(mReqQ.empty()) return std::nullopt;
+        auto data = mReqQ.front();
+        mReqQ.pop();
+        return data;
     }
 
     void HttpRouter::listenerProc(std::string_view ip, uint16_t port, std::promise<int> state) {
@@ -102,7 +122,6 @@ namespace http {
             FD_SET(mServSock, &fd);
             if(select(mServSock + 1, &fd, nullptr, nullptr, &tv) > 0) {
                 int clntSock = accept(mServSock, (struct sockaddr*)&sockAddr, &sockAddrLen);
-                std::cout << "Accept" << std::endl;
                 if (clntSock < 0) {
                     std::cerr << "Client Socket Accept Failed" << std::endl; break;
                 }
@@ -112,8 +131,12 @@ namespace http {
                     std::cerr << "Read Request Data Failed" << std::endl; break;
                 }
                 REQ req(buf);
-                std::cout << "Request => " << req.getMethod() << ' ' << req.getURI() << std::endl;
-                close(clntSock);
+                try {
+                    auto func = findRoute(req.getURI(), req.getMethod());
+                    pushReq(req, func, clntSock);
+                } catch(const std::runtime_error& e) {
+                    std::cerr << e.what() << std::endl;
+                }
             }
         }
         
@@ -129,20 +152,21 @@ namespace http {
                 std::unique_lock lock(mReqMutex);
                 mWorkerCondvar.wait(lock);
             }
+            if(!isRunning()) return;
 
             auto optReq = pullReq();
             if(optReq.has_value() == false) 
                 continue;
 
             auto[req, func, sock] = optReq.value();
-            
+            std::cout << "Handler Worker Running" << std::endl;
             try {
-                auto res = func(req);
-                auto resMsg = res.to_serialized();
-                std::cout << resMsg << std::endl;
+                func(req);
             } catch(...) {
                 
             }
+
+            close(sock);
         }
     }
 

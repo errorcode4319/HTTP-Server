@@ -3,11 +3,12 @@
 int main() {
     std::cout << "MainTest" << std::endl;
 
-    http::HttpRouter server;
-    server.start(8);
-
-    std::string buf;
-    std::cin >> buf;
-
-    server.stop();
+    auto server = std::make_unique<http::HttpRouter>();
+    server->addRoute("/", [](const http::REQ& req) -> http::RES {
+        std::cout << "Index => " << req.getURI() << ' ' << req.getMethod() << std::endl;
+        return http::RES();
+    }, {"GET", "POST"});
+    server->start(16, "0.0.0.0", 8080);
+    
+    getchar();
 }

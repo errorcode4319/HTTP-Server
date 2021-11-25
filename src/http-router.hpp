@@ -49,8 +49,9 @@ namespace http {
         void    listenerProc(std::string_view ip, uint16_t port, std::promise<int> state);
         void    workerProc();
 
-        void    pushReq(const ReqPkg& reqPkg) {};
-        std::optional<ReqPkg>  pullReq() {};
+        void    pushReq(const ReqPkg& reqPkg);
+        inline void pushReq(REQ req, RouteFunc func, int sock) {pushReq(pack(req, func, sock));}
+        std::optional<ReqPkg>  pullReq();
 
         RouteFunc findRoute(std::string_view uri, std::string_view method);
     private:
@@ -58,9 +59,10 @@ namespace http {
         std::thread             mListenerThread;
         std::vector<std::thread> mWorkerThread;
         std::condition_variable mWorkerCondvar;
+        std::mutex mReqMutex;
 
         std::queue<ReqPkg> mReqQ;
-        std::mutex mReqMutex;
+        std::mutex mReqQMutex;
 
         std::unordered_map<std::string, RoutePkg> mRouteMap;
         std::mutex mRouteMutex;
