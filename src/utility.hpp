@@ -4,6 +4,9 @@
 #include <tuple>
 #include <functional>
 
+#include <unistd.h>
+#include <arpa/inet.h>
+#include <sys/socket.h>
 
 namespace util {
 
@@ -12,6 +15,8 @@ namespace util {
 
     template<typename... Types>
     constexpr auto pack(Types&&... Args) { return std::make_tuple(Args...);}
+
+    struct sockaddr_in getSockAddr(std::string_view ip, uint16_t port);
 
 }
 

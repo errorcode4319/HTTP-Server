@@ -12,38 +12,63 @@
 #include <iostream>
 #include <unordered_map>
 #include <functional>
+#include <initializer_list>
 #include <thread>
 #include <mutex>
 #include <future>
 #include <queue>
+#include <atomic>
+#include <exception>
+#include <stdexcept>
 
 using namespace util;
 
 namespace http {
 
-
     /*
         package => request, handler func, socket descriptor 
     */
-    using ReqPkg = pkg<REQ, std::function<RES(REQ)>, int>;
+    using RouteFunc = std::function<RES(const REQ&)>;
+
+    using ReqPkg = pkg<REQ, RouteFunc, int>;
+    using RoutePkg = pkg<RouteFunc, std::vector<std::string>>;
 
     class HttpRouter {
     public:
         HttpRouter() = default;
-        ~HttpRouter() = default;
+        ~HttpRouter() {stop();};
+
+        void    start(int maxWorker, std::string_view ip="0.0.0.0", uint16_t port=8080);
+        void    stop();
+
+        void    addRoute(std::string_view uri, RouteFunc func, std::vector<std::string> methods = {"get"});
+
+        bool    isRunning() const {return mIsRunning;}
 
     private:
+        void    listenerProc(std::string_view ip, uint16_t port, std::promise<int> state);
+        void    workerProc();
 
-        void    pushReq(const ReqPkg& reqPkg);
-        ReqPkg  pullReq();
+        void    pushReq(const ReqPkg& reqPkg) {};
+        std::optional<ReqPkg>  pullReq() {};
+
+        RouteFunc findRoute(std::string_view uri, std::string_view method);
     private:
 
         std::thread             mListenerThread;
+        std::vector<std::thread> mWorkerThread;
         std::condition_variable mWorkerCondvar;
 
         std::queue<ReqPkg> mReqQ;
         std::mutex mReqMutex;
 
+        std::unordered_map<std::string, RoutePkg> mRouteMap;
+        std::mutex mRouteMutex;
+
+        bool mIsRunning;
+        int mServSock = -1;
+        std::string mIP = "";
+        uint16_t    mPort = 0;
     };
 
 } 
