@@ -3,7 +3,7 @@
 
 #include <tuple>
 #include <functional>
-
+#include <cstring>
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>

@@ -65,7 +65,7 @@ namespace http {
         std::unordered_map<std::string, RoutePkg> mRouteMap;
         std::mutex mRouteMutex;
 
-        bool mIsRunning;
+        bool mIsRunning = false;
         int mServSock = -1;
         std::string mIP = "";
         uint16_t    mPort = 0;

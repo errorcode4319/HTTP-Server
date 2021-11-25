@@ -15,7 +15,7 @@ namespace http {
         HttpMessage() = default;
         virtual ~HttpMessage() = default;
 
-        virtual std::string to_serialized();
+        std::string to_serialized();
 
     public:
         std::optional<std::string_view> getHeader(std::string_view key) const {

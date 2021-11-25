@@ -20,7 +20,7 @@ namespace http {
             return;
         }
         for(int i=0;i<maxWorker;i++) {
-            mWorkerThread.emplace_back(&HttpRouter::worker, this);
+            mWorkerThread.emplace_back(&HttpRouter::workerProc, this);
         }
     }
 
@@ -60,37 +60,67 @@ namespace http {
         
         static auto init_failed = [&](int stateCode, std::string_view msg) {
             std::cerr << msg << std::endl;
-            state.set(stateCode);
+            state.set_value(stateCode);
         };
 
         mServSock = socket(PF_INET, SOCK_STREAM, 0); //TCP Socket 
         if(mServSock < 0) {
-            init_failed(-1, "Create TCP Socket Failed");
+            init_failed(-1, "Create TCP Socket Failed"); return;
         }
 
         int sockopt_flag = 1;
         if(setsockopt(mServSock, SOL_SOCKET, SO_REUSEADDR, reinterpret_cast<char*>(&sockopt_flag), sizeof(sockopt_flag)) < 0) {
-            init_failed(-2, "Set SocketOption Failed");
+            init_failed(-2, "Set SocketOption Failed"); return;
         }
 
-        auto sockAddr = getSockAddr("0.0.0.0", 8080);   //utility.hpp
+        //auto sockAddr = getSockAddr("0.0.0.0", 8080);   //utility.hpp
+        struct sockaddr_in sockAddr;
+        memset(&sockAddr, 0, sizeof(sockAddr));
+        sockAddr.sin_family = AF_INET;
+        sockAddr.sin_addr.s_addr = htonl(INADDR_ANY);
+        sockAddr.sin_port = htons(port);
+
         socklen_t sockAddrLen = sizeof(sockAddr);
         if(bind(mServSock, (struct sockaddr*)&sockAddr, sockAddrLen) < 0) {
-            init_failed(-3, "Bind Address Failed");
+            init_failed(-3, "Bind Address Failed"); return;
         }
 
         if(listen(mServSock, 256) < 0) {
-            init_failed(-4, "Listen Socket Failed");
+            init_failed(-4, "Listen Socket Failed"); return;
         }
 
-        state.set(0); //init success 
+        state.set_value(0); //init success 
 
         fd_set fd;
         FD_ZERO(&fd);
-        struct timeval to;
-        to.tv_set = 1;
-        to_tv_usec = 0;
-    
+        
+
+        while(isRunning()) {
+            struct timeval tv;
+            tv.tv_sec = 1;
+            tv.tv_usec = 0;
+            FD_SET(mServSock, &fd);
+            if(select(mServSock + 1, &fd, nullptr, nullptr, &tv) > 0) {
+                int clntSock = accept(mServSock, (struct sockaddr*)&sockAddr, &sockAddrLen);
+                std::cout << "Accept" << std::endl;
+                if (clntSock < 0) {
+                    std::cerr << "Client Socket Accept Failed" << std::endl; break;
+                }
+
+                std::string buf(4096, 0);
+                if(read(clntSock, &buf[0], buf.size()) < 0) {
+                    std::cerr << "Read Request Data Failed" << std::endl; break;
+                }
+                REQ req(buf);
+                std::cout << "Request => " << req.getMethod() << ' ' << req.getURI() << std::endl;
+                close(clntSock);
+            }
+        }
+        
+
+        close(mServSock);
+        std::cout << "Listener Thread Finished" << std::endl;
+        return;
     }
 
     void HttpRouter::workerProc() {
