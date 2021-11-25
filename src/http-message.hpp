@@ -18,6 +18,12 @@ namespace http {
         std::string to_serialized();
 
     public:
+        void setStartLine(std::string_view startLine) {
+            mStartLine = startLine;
+        }
+        std::string_view getStartLine() const {
+            return mStartLine;
+        }
         std::optional<std::string_view> getHeader(std::string_view key) const {
             if(auto iter = mHeader.find(key.data()); iter != std::end(mHeader))
                 return iter->second;
@@ -33,7 +39,8 @@ namespace http {
             mBody = body;
         }
 
-    private:
+    protected:
+        std::string mStartLine = "";
         std::unordered_map<std::string, std::string> mHeader;
         std::string mBody = "";
     };

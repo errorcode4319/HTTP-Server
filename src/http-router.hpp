@@ -8,6 +8,7 @@
 
 #include "utility.hpp"
 #include "http-message.hpp"
+#include "http-message-template.hpp"
 
 #include <iostream>
 #include <unordered_map>

@@ -49,15 +49,22 @@ namespace http {
     }
 
     RouteFunc HttpRouter::findRoute(std::string_view uri, std::string_view method) {
+        static auto func404 = [](const REQ& req) -> RES {
+            return res_template::notFound();
+        };
+        static auto func405 = [](const REQ& req) -> RES {
+            return res_template::notAllowed();
+        };
+
         std::scoped_lock lock(mRouteMutex);
         if(auto iter = mRouteMap.find(uri.data()); iter != std::end(mRouteMap)) {
             auto&[func, methods] = iter->second;
             for(auto& m:methods) {
                 if(m == method) return func; 
             }
-            throw std::runtime_error("Not Allowed Method");
+            return func405;
         }
-        throw std::runtime_error("404 Not Found");
+        return func404;
     }
 
     void HttpRouter::pushReq(const ReqPkg& reqPkg) {
@@ -160,8 +167,11 @@ namespace http {
 
             auto[req, func, sock] = optReq.value();
             std::cout << "Handler Worker Running" << std::endl;
+
             try {
-                func(req);
+                auto res = func(req);
+                auto resMsg = res.to_serialized();
+                write(sock, resMsg.c_str(), resMsg.size());
             } catch(...) {
                 
             }

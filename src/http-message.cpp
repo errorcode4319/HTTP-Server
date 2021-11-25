@@ -7,6 +7,7 @@ namespace http {
 
     std::string HttpMessage::to_serialized() {
         std::stringstream ss;
+        ss << mStartLine << HEADER_DELIMITER;
         for(auto& prop : mHeader) {
             ss << prop.first << ": " << prop.second << HEADER_DELIMITER;
         }
@@ -16,14 +17,13 @@ namespace http {
 
     void HttpRequest::parse(std::string_view rawMsg) {
         
-        auto startLine = rawMsg.substr(0, rawMsg.find(HEADER_DELIMITER));
+        mStartLine = rawMsg.substr(0, rawMsg.find(HEADER_DELIMITER));
         mTargetURI = [&]() {
-            std::string ret(startLine.data() + startLine.find(' ') + 1);
-            ret = ret.substr(0, ret.find(' '));
-            return std::string(ret);
+            std::string ret(mStartLine.data() + mStartLine.find(' ') + 1);
+            return std::string(ret.substr(0, ret.find(' ')));
         }();
 
-        mMethod = startLine.substr(0, startLine.find(' '));
+        mMethod = mStartLine.substr(0, mStartLine.find(' '));
 
         auto rawHeader = rawMsg.substr(
             rawMsg.find(HEADER_DELIMITER) + HEADER_DELIMITER.size(),
