@@ -21,6 +21,7 @@
 #include <atomic>
 #include <exception>
 #include <stdexcept>
+#include <sstream>
 
 using namespace util;
 
@@ -36,15 +37,18 @@ namespace http {
 
     class HttpRouter {
     public:
-        HttpRouter() = default;
+        HttpRouter(int maxWorker, std::string_view ip, uint16_t port) :
+        mMaxWorker(maxWorker), mIP(ip), mPort(port) {};
         ~HttpRouter() {stop();};
-
-        void    start(int maxWorker, std::string_view ip="0.0.0.0", uint16_t port=8080);
+        
+        void    start();
         void    stop();
 
         void    addRoute(std::string_view uri, RouteFunc func, std::vector<std::string> methods = {"get"});
-
         bool    isRunning() const {return mIsRunning;}
+
+        std::string_view getIP() const {return mIP;}
+        uint16_t         getPort() const { return mPort;}
 
     private:
         void    listenerProc(std::string_view ip, uint16_t port, std::promise<int> state);
@@ -68,10 +72,11 @@ namespace http {
         std::unordered_map<std::string, RoutePkg> mRouteMap;
         std::mutex mRouteMutex;
 
-        bool mIsRunning = false;
-        int mServSock = -1;
-        std::string mIP = "";
-        uint16_t    mPort = 0;
+        bool    mIsRunning;
+        int     mServSock = -1;
+        int     mMaxWorker;
+        std::string mIP;
+        uint16_t    mPort;
     };
 
 } 

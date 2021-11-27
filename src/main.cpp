@@ -1,17 +1,29 @@
-#include "http-router.hpp"
+#include "web-server.hpp"
+#include "web-server-commander.hpp"
 
 int main() {
-    std::cout << "MainTest" << std::endl;
+    try {    
+        auto was = std::make_shared<WebServer>(); // => 0.0.0.0:8080
+        WebServerCommander commander(was);
 
-    auto server = std::make_unique<http::HttpRouter>();
-    server->addRoute("/", [](const http::REQ& req) -> http::RES {
-        std::cout << "Index => " << req.getURI() << ' ' << req.getMethod() << std::endl;
-        http::RES res;
-        res.setStartLine("HTTP/1.1 200 OK");
-        res.setBody("Request Received");
-        return res;
-    }, {"GET", "POST"});
-    server->start(16, "0.0.0.0", 8080);
+        was->view("/", "html/index.html", {"GET", "POST"});
+        was->view("/index", "html/index.html", {"GET", "POST"});
 
-    getchar();
+        was->run();
+
+        std::string cmd;
+        while(true) {
+            std::cout << "CMD> ";
+            std::getline(std::cin, cmd);
+            commander.run(cmd);
+        }
+    } catch(const std::exception& e) {
+        std::cerr << e.what() << std::endl;
+        return -1;
+    } catch(...) {
+        std::cerr << "Runtime Error " << std::endl;
+        return -1;
+    }
+
+    return 0;
 }

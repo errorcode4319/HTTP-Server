@@ -60,10 +60,16 @@ namespace http {
         std::string mMethod;
     };
 
-    using HttpResponse = HttpMessage;
+    class HttpResponse : public HttpMessage {
+    public:
+        HttpResponse() = default;
+        HttpResponse(std::string_view startLine) {
+            setStartLine(startLine);
+        }
+    };
 
     using REQ = HttpRequest;
-    using RES = HttpMessage;
+    using RES = HttpResponse;
 
 }
 

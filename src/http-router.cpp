@@ -2,16 +2,18 @@
 
 namespace http {
     
-    void HttpRouter::start(int maxWorker, std::string_view ip, uint16_t port) {
+    void HttpRouter::start() {
+        
         if(isRunning()) {
             std::cerr << "Already Running" << std::endl; return;
         }
+        
+        std::cout << "Service Start" << std::endl;
+
         mIsRunning = true;
-        mIP = ip;
-        mPort = port;
         std::promise<int> promListenerState;
         auto futState = promListenerState.get_future();
-        mListenerThread = std::thread{&HttpRouter::listenerProc, this, ip, port, std::move(promListenerState)};
+        mListenerThread = std::thread{&HttpRouter::listenerProc, this, mIP, mPort, std::move(promListenerState)};
         int state = futState.get();
         if (state != 0) { // Service Start Failed 
             mIsRunning = false;
@@ -19,12 +21,13 @@ namespace http {
             std::cerr << "Service Start Failed" << std::endl;
             return;
         }
-        for(int i=0;i<maxWorker;i++) {
+        for(int i=0;i<mMaxWorker;i++) {
             mWorkerThread.emplace_back(&HttpRouter::workerProc, this);
         }
     }
 
     void HttpRouter::stop() {
+        std::cout << "Service Shutdown" << std::endl;
         if(isRunning()) {
             mIsRunning = false;
             std::unique_lock lock(mReqMutex);
@@ -100,13 +103,8 @@ namespace http {
             init_failed(-2, "Set SocketOption Failed"); return;
         }
 
-        //auto sockAddr = getSockAddr("0.0.0.0", 8080);   //utility.hpp
-        struct sockaddr_in sockAddr;
-        memset(&sockAddr, 0, sizeof(sockAddr));
-        sockAddr.sin_family = AF_INET;
-        sockAddr.sin_addr.s_addr = htonl(INADDR_ANY);
-        sockAddr.sin_port = htons(port);
-
+        auto sockAddr = network::getSockAddr(ip, port);   //utility.hpp
+        
         socklen_t sockAddrLen = sizeof(sockAddr);
         if(bind(mServSock, (struct sockaddr*)&sockAddr, sockAddrLen) < 0) {
             init_failed(-3, "Bind Address Failed"); return;
@@ -132,7 +130,6 @@ namespace http {
                 if (clntSock < 0) {
                     std::cerr << "Client Socket Accept Failed" << std::endl; break;
                 }
-
                 std::string buf(4096, 0);
                 if(read(clntSock, &buf[0], buf.size()) < 0) {
                     std::cerr << "Read Request Data Failed" << std::endl; break;
@@ -149,7 +146,6 @@ namespace http {
         
 
         close(mServSock);
-        std::cout << "Listener Thread Finished" << std::endl;
         return;
     }
 
@@ -166,8 +162,7 @@ namespace http {
                 continue;
 
             auto[req, func, sock] = optReq.value();
-            std::cout << "Handler Worker Running" << std::endl;
-
+            
             try {
                 auto res = func(req);
                 auto resMsg = res.to_serialized();
