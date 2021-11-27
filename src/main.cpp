@@ -7,7 +7,6 @@ int main() {
         WebServerCommander commander(was);
 
         was->view("/", "html/index.html", {"GET", "POST"});
-        was->view("/index", "html/index.html", {"GET", "POST"});
 
         was->run();
 
