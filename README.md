@@ -5,4 +5,34 @@ c++ Based HTTP-Server
  - Linux (amd64, arm)
 
 ## Dependencies
- - C++17
+ - gcc (>=7, c++17)
+ - make 
+ - cmake (>=3.1)
+
+## Usage
+### Build
+```sh
+git clone https://github.com/errorcode4319/HTTP-Server.git
+cd HTTP-Server
+cd build
+cmake..
+make -j4 
+./http-server
+```
+
+### Commands
+```sh
+> run    
+# start http service
+> stop
+# stop http service
+> state
+# show http service info
+> restart
+# restart http service 
+> reload
+# auto reload static html pages
+# No supportd yet (2021-11-27)
+> quit
+# exit application 
+```
