@@ -38,3 +38,13 @@ make -j4
 > quit
 # exit application 
 ```
+
+### Add static html page
+```
+
+```
+
+### Add http handler callback
+```
+
+```
