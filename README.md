@@ -22,6 +22,8 @@ make -j4
 
 ### Commands
 ```sh
+> help
+# Show commands description.
 > run    
 # start http service
 > stop
@@ -32,7 +34,7 @@ make -j4
 # restart http service 
 > reload
 # auto reload static html pages
-# No supportd yet (2021-11-27)
+# Not supported yet (2021-11-27)
 > quit
 # exit application 
 ```
