@@ -47,7 +47,8 @@ include/divisible/*
 
 .idea/*.xml
 
-build/**/*
+#build/**/*
+build/http-server
 
 include/*
 lib/*

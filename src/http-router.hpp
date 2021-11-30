@@ -49,6 +49,7 @@ namespace http {
 
         std::string_view getIP() const {return mIP;}
         uint16_t         getPort() const { return mPort;}
+        int              getMaxWorker() const {return mMaxWorker;}
 
     private:
         void    listenerProc(std::string_view ip, uint16_t port, std::promise<int> state);

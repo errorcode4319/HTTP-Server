@@ -9,8 +9,8 @@ using namespace http;
 
 class WebServer {
 public:
-    WebServer(std::string_view ip = "0.0.0.0", uint16_t port = 8080) : WebServer(8, ip, port){
-    }
+    WebServer(std::string_view ip = "0.0.0.0", uint16_t port = 8080) 
+    : WebServer(8, ip, port){}
     WebServer(int maxWorker, std::string_view ip, uint16_t port) {
         mRouterInst = std::make_unique<HttpRouter>(maxWorker, ip, port);
     }
@@ -44,6 +44,12 @@ private:
     // uri, filename 
     // reload -> directory scan -> add new html files
     std::unordered_map<std::string, std::string> mHTMLBindMap;
+
+    /* Configs */
+    int         mNumHandlerThreads;
+    uint16_t    mRouterPort;
+    std::string mIP;
+
 };
 
 #endif 
